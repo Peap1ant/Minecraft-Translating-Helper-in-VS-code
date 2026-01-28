@@ -2,7 +2,7 @@
   "name": "minecraft-translator-helper",
   "displayName": "Minecraft Translator Helper",
   "description": "Helper for Minecraft translation (Color codes, Sync, Validation)",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "publisher": "Peaplant",
   "engines": {
     "vscode": "^1.80.0"

@@ -24,13 +24,13 @@ It will create new window at you editor named as "Minecraft Preview", which can 
 
 This feature is for test text color more precesely.
 
-### Scroll Sync
+### Key Sync
 
-Press "Alt + S" to turn on scroll sync.
+Press "Alt + S" to turn on Key sync.
 
-This will makes you sync the scroll with split viewed window.
+This will makes you sync the Key with split viewed window.
 
-Note: This function may can broken when both files total lines are diffrent.
+Note: This work as most top key at focused window. If there is no key at other file, it gonna skip it.
 
 ### Create new files
 

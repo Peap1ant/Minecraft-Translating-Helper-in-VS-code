@@ -36,6 +36,33 @@ const completionInfo: { [key: string]: { name: string, color?: string } } = {
 let isScrollSyncEnabled = false;
 let isSyncing = false;
 
+// Helper: Find JSON Key at specific line (looks upwards)
+function getKeyAtLine(doc: vscode.TextDocument, line: number): string | null {
+    // Check current line and up to 10 lines above to handle multi-line values
+    for (let i = line; i >= Math.max(0, line - 10); i--) {
+        const text = doc.lineAt(i).text;
+        // Match "key": pattern at start of line
+        const match = text.match(/^\s*"([^"\\]*(?:\\.[^"\\]*)*)"\s*:/);
+        if (match) {
+            return match[1];
+        }
+    }
+    return null;
+}
+
+// Helper: Find Line number of specific JSON Key
+function getLineForKey(doc: vscode.TextDocument, key: string): number {
+    const text = doc.getText();
+    const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    // Regex to find "key": at start of line
+    const regex = new RegExp(`^\\s*"${escapedKey}"\\s*:`, 'm');
+    const match = regex.exec(text);
+    if (match) {
+        return doc.positionAt(match.index).line;
+    }
+    return -1;
+}
+
 export function activate(context: vscode.ExtensionContext) {
 
     // =========================================================================
@@ -83,7 +110,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 
     // =========================================================================
-    // Feature 2: Scroll Sync
+    // Feature 2: Scroll Sync (Key-Based)
     // =========================================================================
     const toggleSyncCommand = vscode.commands.registerCommand('minecraft-translator.toggleScrollSync', () => {
         isScrollSyncEnabled = !isScrollSyncEnabled;
@@ -96,14 +123,29 @@ export function activate(context: vscode.ExtensionContext) {
         if (vscode.window.activeTextEditor !== e.textEditor) { return; }
 
         isSyncing = true;
+        const activeEditor = e.textEditor;
         const topLine = e.visibleRanges[0].start.line;
 
+        // 1. Find which key is at the top of the active editor
+        const currentKey = getKeyAtLine(activeEditor.document, topLine);
+
         vscode.window.visibleTextEditors.forEach(otherEditor => {
-            if (otherEditor !== e.textEditor && otherEditor.viewColumn !== e.textEditor.viewColumn) {
-                const range = new vscode.Range(topLine, 0, topLine, 0);
+            if (otherEditor !== activeEditor && otherEditor.viewColumn !== activeEditor.viewColumn) {
+                let targetLine = topLine; // Fallback to line sync
+
+                // 2. If we found a key, find that key in the other editor
+                if (currentKey) {
+                    const foundLine = getLineForKey(otherEditor.document, currentKey);
+                    if (foundLine !== -1) {
+                        targetLine = foundLine;
+                    }
+                }
+
+                const range = new vscode.Range(targetLine, 0, targetLine, 0);
                 otherEditor.revealRange(range, vscode.TextEditorRevealType.AtTop);
             }
         });
+        
         setTimeout(() => { isSyncing = false; }, 50);
     });
     context.subscriptions.push(scrollListener);
@@ -136,7 +178,6 @@ export function activate(context: vscode.ExtensionContext) {
         const originalDiagnostics: vscode.Diagnostic[] = [];
         const foundKeys = new Set<string>();
 
-        // Regex Parse
         const pairRegex = /"([^"\\]*(?:\\.[^"\\]*)*)"\s*:\s*("([^"\\]*(?:\\.[^"\\]*)*)"|)/g;
         
         let match;
@@ -156,7 +197,6 @@ export function activate(context: vscode.ExtensionContext) {
             }
         }
 
-        // Check Missing Keys
         const originalRawText = fs.readFileSync(originalPath, 'utf-8');
         for (const key in originalJson) {
             if (!foundKeys.has(key)) {
@@ -178,11 +218,8 @@ export function activate(context: vscode.ExtensionContext) {
         diagnosticCollection.set(vscode.Uri.file(originalPath), originalDiagnostics);
     };
 
-    // Trigger validation on file change, open, and initialization
     context.subscriptions.push(vscode.workspace.onDidChangeTextDocument(e => validateJson(e.document)));
     context.subscriptions.push(vscode.workspace.onDidOpenTextDocument(doc => validateJson(doc)));
-    
-    // [FIX] Validate ALL open documents on startup
     vscode.workspace.textDocuments.forEach(doc => validateJson(doc));
 
 
@@ -228,7 +265,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 
     // =========================================================================
-    // Feature 6: Highlighting
+    // Feature 6: Highlighting (Global)
     // =========================================================================
     const decorations = new Map<string, vscode.TextEditorDecorationType>();
     
@@ -246,7 +283,6 @@ export function activate(context: vscode.ExtensionContext) {
         return decorations.get(key)!;
     }
 
-    // [FIX] Updated to support ALL visible editors, not just active one
     function updateDecorations() {
         for (const editor of vscode.window.visibleTextEditors) {
             if (!editor.document) { continue; }
@@ -289,7 +325,6 @@ export function activate(context: vscode.ExtensionContext) {
                 }
             }
             
-            // Apply decorations to THIS specific editor
             decorations.forEach(deco => editor.setDecorations(deco, []));
             decorationRanges.forEach((ranges, deco) => editor.setDecorations(deco, ranges));
         }
@@ -297,9 +332,7 @@ export function activate(context: vscode.ExtensionContext) {
 
     vscode.workspace.onDidChangeTextDocument(() => updateDecorations(), null, context.subscriptions);
     vscode.window.onDidChangeActiveTextEditor(() => updateDecorations(), null, context.subscriptions);
-    vscode.window.onDidChangeVisibleTextEditors(() => updateDecorations(), null, context.subscriptions); // [FIX] Trigger on visibility change
-    
-    // [FIX] Run initial highlight on all visible editors
+    vscode.window.onDidChangeVisibleTextEditors(() => updateDecorations(), null, context.subscriptions);
     updateDecorations();
 }
 
