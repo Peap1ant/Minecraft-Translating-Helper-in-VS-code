@@ -8,6 +8,8 @@ This project is make as vive coding.
 
 ### Adding Simbols
 
+<img width="559" height="290" alt="Image" src="https://github.com/user-attachments/assets/530380f6-903e-409c-b106-6e3147751656" />
+
 You can input simbol(§) latter by followed steps.
 
 1. Press "&&"
@@ -21,6 +23,8 @@ Simbol will makes text as colored or effected like in minecraft at editor.
 Select text which text want to test and press "Ctrl + Shift + L" at same time.
 
 It will create new window at you editor named as "Minecraft Preview", which can change background color
+
+<img width="985" height="126" alt="Image" src="https://github.com/user-attachments/assets/9b1c9d72-e49d-43a5-b874-4f8094490141" />
 
 This feature is for test text color more precesely.
 
@@ -36,7 +40,11 @@ Note: This work as most top key at focused window. If there is no key at other f
 
 This function provides you create you file with full key with no value for starting new translating.
 
-Press "F1"(or "Ctrl + Shift + P) and select "Minecrate: Create New Language File(Empty Values)", and add file name.
+Open json to work and press "F1"(or "Ctrl + Shift + P) and select "Minecrate: Create New Language File(Empty Values)", and add file name.
+
+<img width="618" height="193" alt="Image" src="https://github.com/user-attachments/assets/738593d2-3498-4e00-89fe-5aefa92b0fe6" />
+
+This will make new file with key and no values
 
 ### Providing errors for json
 
@@ -46,4 +54,6 @@ This extention provides 3 types of errors for json.
 2. Error when target file contains missing key(key not in original json)
 3. Error when original file contains new key(key not in target json)
 
-3rd one is kinda weird, so you need to re-open both(original and target json) json to reload.
+<img width="618" height="302" alt="Image" src="https://github.com/user-attachments/assets/f2f2ba26-827a-47ef-911b-e605bd18cb09" />
+
+3rd one is kinda weird, so you need to re-open both(original and target json) json to reload(or re-open vscode.
