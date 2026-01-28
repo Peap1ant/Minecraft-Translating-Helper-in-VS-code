@@ -1,7 +1,7 @@
 # Minecraft Translating Helper(In VSCode)
 
 Helps you translating minecraft text at vs code.
-y
+
 This project is make as vive coding.
 
 ## Description
